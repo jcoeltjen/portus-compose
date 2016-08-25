@@ -1,0 +1,62 @@
+version: '2'
+
+services:
+  web:
+    image: portus-git
+    networks:
+      portus-internal:
+        aliases:
+          - portus-web
+    environment:
+      - MARIADB_SERVICE_HOST=portus-db
+      - MARIADB_USER=root
+      - MARIADB_DATABASE=portus
+      - SERVER_NAME=PORTUS_FQDN
+      - PORTUS_MACHINE_FQDN_VALUE=PORTUS_FQDN
+      - PORTUS_CHECK_SSL_USAGE_ENABLED=false
+      - PORTUS_REGISTRY_JWT_EXPIRATION_TIME_VALUE=24.hours
+      - MARIADB_PASSWORD
+      - PORTUS_SECRET_KEY_BASE
+      - PORTUS_PORTUS_PASSWORD
+    volumes:
+      - ./web/portus.key:/secrets/portus.key
+      - ./web/apache.conf:/etc/apache2/vhosts.d/portus.conf
+    links:
+      - db
+      - registry
+
+  db:
+    image: mariadb:10.0.23
+    networks:
+      portus-internal:
+        aliases:
+          - portus-db
+    volumes:
+      - ./data/mariadb:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD
+
+  registry:
+    build: registry
+    networks:
+      portus-internal:
+        aliases:
+          - portus-registry
+    volumes:
+      - ./data/registry:/var/lib/docker-registry
+
+  proxy:
+    build: proxy
+    networks:
+      portus-internal:
+        aliases:
+          - portus-proxy
+    ports:
+      - 80:80
+      - 443:443
+    links:
+      - web
+      - registry
+
+networks:
+  portus-internal:

@@ -1,0 +1,24 @@
+version: 0.1
+loglevel: info
+storage:
+  filesystem:
+    rootdirectory: /var/lib/docker-registry
+  delete:
+    enabled: true
+http:
+  addr: :5000
+
+auth:
+  token:
+    realm: https://PORTUS_FQDN/v2/token
+    service: REGISTRY_FQDN
+    issuer: PORTUS_FQDN
+    rootcertbundle: /etc/registry/ssl.crt/portus.crt
+
+notifications:
+  endpoints:
+    - name: portus
+      url:  http://PORTUS_FQDN/v2/webhooks/events
+      timeout: 500ms
+      threshold: 5
+      backoff: 1s

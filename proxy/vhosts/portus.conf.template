@@ -1,0 +1,24 @@
+server {
+  listen	443;
+  server_name 	PORTUS_FQDN;
+
+  ssl			on;
+  ssl_certificate 	/etc/nginx/ssl/portus.crt;
+  ssl_certificate_key	/etc/nginx/ssl/portus.key;
+
+  location / {
+    proxy_pass http://portus-web/;
+  }
+
+}
+
+server {
+  listen	80;
+  server_name 	PORTUS_FQDN;
+
+  rewrite     ^(?!/v2/webhooks/events)  https://$server_name$request_uri? permanent;
+
+  location /v2/webhooks/ {
+    proxy_pass http://portus-web/v2/webhooks/;
+  }
+}

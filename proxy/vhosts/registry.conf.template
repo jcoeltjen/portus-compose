@@ -1,0 +1,21 @@
+server {
+  listen	443;
+  server_name 	REGISTRY_FQDN;
+
+  ssl			on;
+  ssl_certificate 	/etc/nginx/ssl/registry.crt;
+  ssl_certificate_key	/etc/nginx/ssl/registry.key;
+
+  location / {
+    proxy_redirect off;
+    proxy_set_header Host $http_host;
+    proxy_set_header X-Forwarded-HTTPS on;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_pass http://portus-registry:5000/;
+  }
+
+  #Allow large requests for pushing big images (like Windows based images)
+  client_max_body_size 20000M;
+
+}
