@@ -1,4 +1,4 @@
-# Portus + Regsitry Compos Deployment
+# Portus + Docker Registry Compose Deployment
 
 ## Prerequisites
 
