@@ -3,12 +3,45 @@
 ## Prerequisites
 
 To run this script the following requirements must be fulfilled:
+
+- Prebuild Portus Docker Image with image name `portus-git`
 - DNS routed hostname for Portus
 - DNS routed hostname for the Docker Registry
 - Valid or Self-Signed-Certificate for Portus
 - Valid or Self-Signed-Certificate for Registry
 
 Note: Only valid certificates were tested. Self-signed ones may break the script at some point.
+
+
+### Build Portus Docker Image
+
+To build the image needed by this script, clone the official openSUSE docker-containers repo
+
+```
+$ git clone https://github.com/openSUSE/docker-containers
+```
+
+Get into the right directory and trigger the build
+
+```
+$ cd docker-containers/derived_images/portus/docker
+$ docker build -t portus-git .
+```
+
+If the process fails in step 4, replace the RUN command with this one and try again.
+This skips the gpg-key install and therefore also skips the gpg-checks for the artefacts provided by the open build service.
+
+```
+RUN zypper --non-interactive --no-gpg-checks ar -f obs://Virtualization:containers:Portus/openSUSE_Leap_42.1 portus-head && \
+    zypper --non-interactive --no-gpg-checks ref && \
+    zypper -n in portus sudo && \
+    zypper clean -a
+```
+
+After you did this, rerun the docker build command:
+```
+$ docker build -t portus-git .
+```
 
 ## Usage
 
@@ -51,7 +84,7 @@ If the internal registry container cannot reach the external endpoint of the Por
 In my case the problem was the firewall an my host machine. For CentOS 7 there is an example rule below that fixed the problem for me.
 
 ```
-iptables -A IN_public_allow -p tcp -m tcp --dport 443 -m conntrack --ctstate NEW -j ACCEPT
+$ iptables -A IN_public_allow -p tcp -m tcp --dport 443 -m conntrack --ctstate NEW -j ACCEPT
 ```
 
 Note that the Portus webinterface was already reachable from public chain. I can't explain why this workaround seems to work but it does. At least for now.
