@@ -70,6 +70,7 @@ Valid arguments are:
 | -c | MariaDB Root password           | yes    |
 | -d | Portus Secret Key Base          | yes    |
 | -e | Portus Password                 | yes    |
+| -f | Non-interactive Flag            | yes    |
 
 If any of the optional flags are not provided, to populate the corresponding environment variables, random values are generated using the command `openssl rand -hex 64`.
 
