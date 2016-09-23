@@ -1,0 +1,11 @@
+certs/*
+config.out
+docker-compose.yml
+
+proxy/certs/*
+proxy/vhosts/*.conf
+
+registry/config.yml
+registry/portus.crt
+
+web/portus.key

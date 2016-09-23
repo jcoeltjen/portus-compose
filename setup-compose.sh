@@ -3,13 +3,13 @@ set -e
 
 check_mandatory_flags() {
   if [ -z "$PORTUS_FQDN" ]; then
-    echo "External FQDN for portus not set. Provide it using the -p flag." >&2
-    echo "Example: ./setupCompose.sh -p portus.example.com" >&2
+    echo "External FQDN for portus not set. Provide it using the -b flag." >&2
+    display_help
     exit 1
   fi
   if [ -z "$REGISTRY_FQDN" ]; then
-    echo "External FQDN for portus not set. Provide it using the -r flag." >&2
-    echo "Example: ./setupCompose.sh -r registry.example.com" >&2
+    echo "External FQDN for portus not set. Provide it using the -a flag." >&2
+    display_help
     exit 1
   fi
 }
@@ -43,9 +43,34 @@ print_all_arguments() {
   echo "REGISTRY_FQDN          = " $REGISTRY_FQDN
   echo "MARIADB_PASSWORD       = " $MARIADB_PASSWORD
   echo "PORTUS_SECRET_KEY_BASE = " $PORTUS_SECRET_KEY_BASE
-  echo "PORTUS_PORTUS_PASSWORD = "$PORTUS_PORTUS_PASSWORD
+  echo "PORTUS_PORTUS_PASSWORD = " $PORTUS_PORTUS_PASSWORD
   echo "#########################################################################################"
 }
+
+write_restart_script() {
+  echo "#!/bin/bash" > restart.sh
+  echo "#########################################################################################" >> restart.sh
+  echo "# Using these parametes to restart portus compose unit: " >> restart.sh
+  echo "# PORTUS_FQDN            = " $PORTUS_FQDN >> restart.sh
+  echo "# REGISTRY_FQDN          = " $REGISTRY_FQDN >> restart.sh
+  echo "# MARIADB_PASSWORD       = " $MARIADB_PASSWORD >> restart.sh
+  echo "# PORTUS_SECRET_KEY_BASE = " $PORTUS_SECRET_KEY_BASE >> restart.sh
+  echo "# PORTUS_PORTUS_PASSWORD = " $PORTUS_PORTUS_PASSWORD >> restart.sh
+  echo "#########################################################################################" >> restart.sh
+  echo "" >> restart.sh
+
+  echo "./setup-compose.sh \\" >> restart.sh
+  echo "  -a " $REGISTRY_FQDN " \\" >> restart.sh
+  echo "  -b " $PORTUS_FQDN " \\" >> restart.sh
+  echo "  -c " $MARIADB_PASSWORD " \\" >> restart.sh
+  echo "  -d " $PORTUS_SECRET_KEY_BASE " \\" >> restart.sh
+  echo "  -e " $PORTUS_PORTUS_PASSWORD " \\" >> restart.sh
+  echo "  -f " >> restart.sh
+
+  chmod +x restart.sh
+}
+
+
 
 display_help() {
 cat << EOM
@@ -56,15 +81,16 @@ Parameters:
   [-c]     MariadDB root password (if not provided a random string will be generated).
   [-d]     Portus Secret Key Base (if not provided a random string will be generated).
   [-e]     Portus Password (if not provided a random string will be generated).
+  [-f]     Non-interactive mode. This will delete all previously created containers!
 
-Example command: ./setupCompose.sh  -a registry.example.com -b portus.example.com
+Example command: ./setupCompose.sh -a registry.example.com -b portus.example.com
 
 EOM
 }
 
 # script entrypoint
 
-while getopts "a:b:" opt; do
+while getopts "a:b:c:d:e:f" opt; do
   case $opt in
     a)
       REGISTRY_FQDN=$OPTARG
@@ -86,7 +112,9 @@ while getopts "a:b:" opt; do
       display_help
       exit 0
       ;;
-
+    f)
+      NON_INTERACTIVE=true
+      ;;
     \?)
       display_help
       exit 1
@@ -102,6 +130,7 @@ check_mandatory_flags
 fill_optional_values
 fill_inherited_values
 print_all_arguments
+write_restart_script
 
 #web
 cp ./certs/portus.key ./web/portus.key
@@ -119,17 +148,19 @@ sed -e "s|REGISTRY_FQDN|$REGISTRY_FQDN|g" ./registry/config.yml.intermediate > .
 rm -f ./registry/config.yml.intermediate
 
 
-# Asking to continue
+# Asking to continue if in interactive mode.
+if [[ $NON_INTERACTIVE != true ]]; then
+  echo "This script will now delete all previous containers that may have been started."
+  echo "Normally this should not cause any data lost, as the data is stored inside the ./data/ directory."
+  echo "Please type y to continue or anything else to abort."
 
-echo "This script will now delete all previous containers that may have been started."
-echo "Normally this should not cause any data lost, as the data is stored inside the ./data/ directory."
-echo "Please type y to continue or anything else to abort."
+  read -n 1 answer
 
-read -n 1 answer
+  if [[ "$answer" != "y" ]]; then
+    echo "Aborting..."
+    exit 1
+  fi
 
-if [[ "$answer" != "y" ]]; then
-  echo "Aborting..."
-  exit 1
 fi
 
 
@@ -154,4 +185,7 @@ cat << EOM
 System Ready!
 
 Remember to save the generated passwords!
+Thile file restart.sh in the execution directory contains all generated passwords and keys.
 EOM
+
+echo $(tput bold && tput setaf 1) Store the restart.sh file at a secure location and remove the file from this system. This file contains passwords! $(tput init )
