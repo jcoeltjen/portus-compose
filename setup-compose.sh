@@ -188,4 +188,6 @@ Remember to save the generated passwords!
 Thile file restart.sh in the execution directory contains all generated passwords and keys.
 EOM
 
-echo $(tput bold && tput setaf 1) Store the restart.sh file at a secure location and remove the file from this system. This file contains passwords! $(tput init )
+RED='\033[0;31m'
+NC='\033[0m'
+echo -e $(RED)Store the restart.sh file at a secure location and remove the file from this system. This file contains passwords!$(NC)
