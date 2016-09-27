@@ -21,7 +21,7 @@ fill_inherited_values() {
 fill_optional_values() {
   if [ -z "$MARIADB_PASSWORD" ]; then
     echo "Mysql password not providing. Generating..."
-    MARIADB_PASSWORD=$(openssl rand -hex 64)
+    MARIADB_PASSWORD=$(openssl rand -hex 25)
     MYSQL_ROOT_PASSWORD=$MARIADB_PASSWORD
   fi
 
