@@ -190,4 +190,4 @@ EOM
 
 RED='\033[0;31m'
 NC='\033[0m'
-echo -e $(RED)Store the restart.sh file at a secure location and remove the file from this system. This file contains passwords!$(NC)
+echo -e $REDStore the restart.sh file at a secure location and remove the file from this system. This file contains passwords!$NC
